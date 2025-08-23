@@ -7,33 +7,12 @@ import { asyncHandler } from "@/lib/asyncHandler";
 import { validateBody } from "@/lib/validator";
 import { APIResponse, APIError } from "@/lib/apiResponse";
 import { format, addDays } from "date-fns";
-import { fetchRoutesSchema } from "@/types/routes";
-
-// Response types
-interface DirectFlight {
-	id: string;
-	flightNumber: string;
-	airlineName: string;
-	origin: string;
-	destination: string;
-	departureAt: string;
-	arrivalAt: string;
-	operateDate: string;
-	status: string;
-}
-
-interface TransitRoute {
-	firstFlight: DirectFlight;
-	secondFlight: DirectFlight;
-	transitAirport: string;
-	totalDuration: string; // e.g., "5h 30m"
-	layoverDuration: string;
-}
-
-interface FetchRoutesResponse {
-	directFlights: DirectFlight[];
-	transitRoute: TransitRoute | null;
-}
+import { fetchRoutesSchema } from "@/types/route";
+import type {
+	DirectFlight,
+	TransitRoute,
+	FetchRoutesResponse,
+} from "@/types/route";
 
 // Helper function to calculate duration between two timestamps
 function calculateDuration(start: Date, end: Date): string {

@@ -13,7 +13,9 @@ export async function validateBody<T>(
 		if (err.name === "ZodError") {
 			throw new APIError(
 				"Validation Error: " +
-					err.issues.map((e: any) => e.message).join(", "),
+					err.issues.map((e: any) => 
+						`[${e.path.join('.')}] ${e.message}`
+					).join(", "),
 				400
 			);
 		}
