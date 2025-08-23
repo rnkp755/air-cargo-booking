@@ -37,10 +37,6 @@ export function validateCancellationEligibility(bookingStatus: string): void {
 	}
 }
 
-export function validateUpdationEligibility(bookingStatus: string): void { 
-    
-}
-
 /**
  * Distributed lock utility using PostgreSQL advisory locks
  * Useful for more complex distributed scenarios

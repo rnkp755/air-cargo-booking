@@ -106,5 +106,5 @@ export interface BookingUpdateResponse {
 	id: string;
 	refId: string;
 	status: string;
-	location: string;
+	updatedAt: string;
 }
