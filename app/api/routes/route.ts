@@ -13,6 +13,7 @@ import type {
 	TransitRoute,
 	FetchRoutesResponse,
 } from "@/types/route";
+import { RouteCacheService } from "@/lib/cache/route";
 
 // Helper function to calculate duration between two timestamps
 function calculateDuration(start: Date, end: Date): string {
@@ -156,6 +157,29 @@ async function getTransitRoute(
 	return null; // No valid transit route found
 }
 
+async function fetchRoutesFromDatabase(
+	origin: string,
+	destination: string,
+	departure_date: Date
+): Promise<FetchRoutesResponse> {
+	const directFlights = await getDirectFlights(
+		origin,
+		destination,
+		departure_date
+	);
+
+	const transitRoute = await getTransitRoute(
+		origin,
+		destination,
+		departure_date
+	);
+
+	return {
+		directFlights,
+		transitRoute,
+	};
+}
+
 export const POST = asyncHandler(async (req: Request) => {
 	const { origin, destination, departure_date } = await validateBody(
 		req,
@@ -172,33 +196,57 @@ export const POST = asyncHandler(async (req: Request) => {
 		throw APIError.badRequest("Departure date cannot be in the past");
 	}
 
-	const directFlights = await getDirectFlights(
+	// Try to get data from cache first
+	let routeData = await RouteCacheService.get(
 		origin,
 		destination,
 		departure_date
 	);
+	let fromCache = true;
 
-	const transitRoute = await getTransitRoute(
-		origin,
-		destination,
-		departure_date
-	);
+	// If cache miss, fetch from database
+	if (!routeData) {
+		fromCache = false;
+		routeData = await fetchRoutesFromDatabase(
+			origin,
+			destination,
+			departure_date
+		);
 
-	const response: FetchRoutesResponse = {
-		directFlights,
-		transitRoute,
-	};
+		// Cache the result for future requests
+		// Use different TTL based on how close the departure date is
+		const daysUntilDeparture = Math.ceil(
+			(departure_date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+		);
+		let cacheTTL = 3600; // Default 1 hour
 
-	return NextResponse.json(
-		new APIResponse(
-			true,
-			`Found ${directFlights.length} direct flights${
-				transitRoute ? " and 1 transit route" : ""
-			} for ${origin} to ${destination} on ${format(
-				departure_date,
-				"yyyy-MM-dd"
-			)}`,
-			response
-		)
-	);
+		if (daysUntilDeparture <= 1) {
+			cacheTTL = 300; // 5 minutes for same day or next day
+		} else if (daysUntilDeparture <= 7) {
+			cacheTTL = 1800; // 30 minutes for within a week
+		} else {
+			cacheTTL = 3600; // 1 hour for future dates
+		}
+
+		await RouteCacheService.set(
+			origin,
+			destination,
+			departure_date,
+			routeData,
+			cacheTTL
+		);
+	}
+
+	const response: FetchRoutesResponse = routeData;
+
+	const message = `${fromCache ? "[CACHED] " : ""}Found ${
+		response.directFlights.length
+	} direct flights${
+		response.transitRoute ? " and 1 transit route" : ""
+	} for ${origin} to ${destination} on ${format(
+		departure_date,
+		"yyyy-MM-dd"
+	)}`;
+
+	return NextResponse.json(new APIResponse(true, message, response));
 });
