@@ -51,7 +51,7 @@ export async function seedFlightSchedules() {
 
 	// 2. Clear existing schedules to prevent duplicates on re-runs
 	console.log("🗑️  Clearing existing flight schedules...");
-	// ALready handled in main.ts
+	// Already handled in main.ts
 
 	// 3. Generate new schedules based on the fetched routes
 	const newSchedules: (typeof flightSchedules.$inferInsert)[] = [];

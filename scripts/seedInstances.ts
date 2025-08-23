@@ -11,11 +11,13 @@ import { fromZonedTime } from "date-fns-tz";
 import "dotenv/config";
 
 export async function seedFlightInstances() {
-	console.log("🛫  Seeding flight instances for the next 10 days...");
+	console.log(
+		"🛫  Seeding flight instances for the next 10 days starting from today..."
+	);
 
 	// 1. Clear existing instances to prevent duplicates on re-runs
 	console.log("🗑️  Clearing existing flight instances...");
-    // Already handled in main.ts
+	// Already handled in main.ts
 
 	// 2. Fetch all schedules with their origin and destination timezones
 	// We use aliases to join the airports table twice for origin and destination
@@ -45,12 +47,13 @@ export async function seedFlightInstances() {
 		return;
 	}
 
-	// 3. Generate instances for the next 10 days
+	// 3. Generate instances for the next 10 days starting from today
 	const newInstances: (typeof flightInstances.$inferInsert)[] = [];
-	const startDate = new Date(); // Today
+	const today = new Date();
+	today.setHours(0, 0, 0, 0); // Start from beginning of today
 
 	for (let i = 0; i < 10; i++) {
-		const currentDate = addDays(startDate, i);
+		const currentDate = addDays(today, i);
 		const jsDayOfWeek = currentDate.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
 
 		// Your schema comment: Mon=1<<0, ... Sun=1<<6
@@ -98,7 +101,7 @@ export async function seedFlightInstances() {
 				operateDate: format(currentDate, "yyyy-MM-dd"),
 				departureAt,
 				arrivalAt,
-				status: "SCHEDULED", // Default status
+				status: "SCHEDULED", // Only SCHEDULED status
 			});
 		}
 	}
@@ -108,5 +111,7 @@ export async function seedFlightInstances() {
 		await db.insert(flightInstances).values(newInstances);
 	}
 
-	console.log(`✅  Seeded ${newInstances.length} new flight instances.`);
+	console.log(
+		`✅  Seeded ${newInstances.length} new flight instances starting from today.`
+	);
 }
