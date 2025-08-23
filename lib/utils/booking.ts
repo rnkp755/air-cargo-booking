@@ -38,6 +38,9 @@ export async function validateFlightRoute(
 	origin: string,
 	destination: string
 ) {
+
+	console.log(`Validating flight route for origin ${origin}, destination ${destination}, flights: ${flightInstanceIds.join(", ")}`);
+
 	// Fetch flight instances
 	const flights = await db
 		.select()

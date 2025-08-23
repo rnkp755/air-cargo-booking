@@ -61,6 +61,10 @@ export const PATCH = asyncHandler(
 							);
 						}
 
+						console.log(
+							`Booking with ref ${updatedBooking.refId} marked as CANCELLED`
+						);
+
 						// Create cancellation event
 						await tx.insert(events).values({
 							entityType: "BOOKING",
@@ -69,6 +73,10 @@ export const PATCH = asyncHandler(
 							location: updatedBooking.origin,
 							description: reason || "Booking cancelled by user",
 						});
+
+						console.log(
+							`Event created for booking ref ${updatedBooking.refId} cancellation`
+						);
 
 						return {
 							booking: updatedBooking,

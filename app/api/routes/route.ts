@@ -206,6 +206,8 @@ export const POST = asyncHandler(async (req: Request) => {
 
 	// If cache miss, fetch from database
 	if (!routeData) {
+		console.log("Cache miss - fetching routes from database");
+
 		fromCache = false;
 		routeData = await fetchRoutesFromDatabase(
 			origin,
@@ -228,6 +230,8 @@ export const POST = asyncHandler(async (req: Request) => {
 			cacheTTL = 3600; // 1 hour for future dates
 		}
 
+		console.log(`Caching route data with TTL of ${cacheTTL} seconds`);
+
 		await RouteCacheService.set(
 			origin,
 			destination,
@@ -235,6 +239,7 @@ export const POST = asyncHandler(async (req: Request) => {
 			routeData,
 			cacheTTL
 		);
+
 	}
 
 	const response: FetchRoutesResponse = routeData;
@@ -247,6 +252,8 @@ export const POST = asyncHandler(async (req: Request) => {
 		departure_date,
 		"yyyy-MM-dd"
 	)}`;
+
+	console.log(message);
 
 	return NextResponse.json(new APIResponse(true, message, response));
 });

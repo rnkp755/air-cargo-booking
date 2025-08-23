@@ -80,28 +80,6 @@ export const GET = asyncHandler(
 			.where(eq(events.entityId, bookingData.bookingId))
 			.orderBy(desc(events.createdAt)); // Most recent events first
 
-		// Also fetch flight events for comprehensive timeline
-		const flightInstanceIds = bookingWithFlights.map(
-			(row) => row.flightInstanceId
-		);
-
-		const flightEvents = await db
-			.select({
-				id: events.id,
-				eventType: events.eventType,
-				location: events.location,
-				description: events.description,
-				createdAt: events.createdAt,
-				entityId: events.entityId, // To identify which flight
-			})
-			.from(events)
-			.where(eq(events.entityType, "FLIGHT"))
-			.orderBy(desc(events.createdAt));
-
-		// Filter flight events to only include those for flights in this booking
-		const relevantFlightEvents = flightEvents.filter((event) =>
-			flightInstanceIds.includes(event.entityId)
-		);
 
 		// Combine and sort all events chronologically (most recent first)
 		const allEvents = [
@@ -109,14 +87,14 @@ export const GET = asyncHandler(
 				...event,
 				type: "booking" as const,
 			})),
-			...relevantFlightEvents.map((event) => ({
-				...event,
-				type: "flight" as const,
-			})),
 		].sort(
 			(a, b) =>
 				new Date(b.createdAt).getTime() -
 				new Date(a.createdAt).getTime()
+		);
+
+		console.log(
+			`Fetched history for booking ref ${bookingData.refId} with ${allEvents.length} events`
 		);
 
 		// Transform data for response

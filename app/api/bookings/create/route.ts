@@ -60,6 +60,8 @@ export const POST = asyncHandler(async (req: Request) => {
 
 			await tx.insert(bookingFlights).values(bookingFlightData);
 
+			console.log(`Booking created with ref ${refId} and ID ${booking.id}`);
+
 			// Create booking event
 			await tx.insert(events).values({
 				entityType: "BOOKING",
@@ -68,6 +70,8 @@ export const POST = asyncHandler(async (req: Request) => {
 				location: origin,
 				description: `Booking created with reference ${refId}`,
 			});
+
+			console.log(`Event created for booking ref ${refId} creation`);
 
 			return booking;
 		});

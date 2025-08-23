@@ -53,6 +53,10 @@ export const PATCH = asyncHandler(
 							);
 						}
 
+						console.log(
+							`Booking with ref ${updatedBooking.refId} marked as ARRIVED`
+						);
+
 						// Create updation event
 						await tx.insert(events).values({
 							entityType: "BOOKING",
@@ -61,6 +65,10 @@ export const PATCH = asyncHandler(
 							location: updatedBooking.destination,
 							description: `Booking with ref ${updatedBooking.refId} has arrived at ${updatedBooking.destination}`,
 						});
+
+						console.log(
+							`Event created for booking ref ${updatedBooking.refId} arrival at ${updatedBooking.destination}`
+						);
 
 						return {
 							booking: updatedBooking,

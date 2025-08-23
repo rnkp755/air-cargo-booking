@@ -69,6 +69,10 @@ export class DistributedLock {
 	 * Returns true if lock acquired, false if already locked
 	 */
 	async tryLock(timeoutMs: number = 5000): Promise<boolean> {
+		console.log(
+			`Attempting to acquire lock for ${this.lockKey} with ID ${this.lockId}`
+		);
+
 		try {
 			const result = await db.execute(
 				sql`SELECT pg_try_advisory_lock(${this.lockId}) as acquired`
@@ -85,6 +89,10 @@ export class DistributedLock {
 	 * Releases the PostgreSQL advisory lock
 	 */
 	async release(): Promise<void> {
+		console.log(
+			`Releasing lock for ${this.lockKey} with ID ${this.lockId}`
+		);
+
 		try {
 			await db.execute(sql`SELECT pg_advisory_unlock(${this.lockId})`);
 		} catch (error) {
@@ -126,6 +134,7 @@ export async function withBookingLock<T>(
 
 	return await lock.withLock(async () => {
 		// Get the locked booking inside the distributed lock
+		console.log(`Acquired distributed lock for booking ${refId}`);
 		const lockedBooking = await lockBookingForUpdate(refId);
 		return await operation(lockedBooking);
 	});
