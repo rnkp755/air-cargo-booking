@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { flightInstances } from "@/db/schema/flightInstances";
 import { routes } from "@/db/schema/routes";
-import { and, eq, gte, lte, isNull, isNotNull } from "drizzle-orm";
+import { and, eq, gte, lte, isNotNull } from "drizzle-orm";
 import { asyncHandler } from "@/lib/asyncHandler";
 import { validateBody } from "@/lib/validator";
 import { APIResponse, APIError } from "@/lib/apiResponse";

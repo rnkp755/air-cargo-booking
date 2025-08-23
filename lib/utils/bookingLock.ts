@@ -68,7 +68,7 @@ export class DistributedLock {
 	 * Acquires a PostgreSQL advisory lock
 	 * Returns true if lock acquired, false if already locked
 	 */
-	async tryLock(timeoutMs: number = 5000): Promise<boolean> {
+	async tryLock(): Promise<boolean> {
 		console.log(
 			`Attempting to acquire lock for ${this.lockKey} with ID ${this.lockId}`
 		);
@@ -103,11 +103,8 @@ export class DistributedLock {
 	/**
 	 * Executes a function with distributed lock protection
 	 */
-	async withLock<T>(
-		fn: () => Promise<T>,
-		timeoutMs: number = 5000
-	): Promise<T> {
-		const lockAcquired = await this.tryLock(timeoutMs);
+	async withLock<T>(fn: () => Promise<T>): Promise<T> {
+		const lockAcquired = await this.tryLock();
 
 		if (!lockAcquired) {
 			throw APIError.conflict(

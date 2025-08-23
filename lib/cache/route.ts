@@ -116,7 +116,7 @@ export class RouteCacheService {
 			const keys = await redis.keys(pattern);
 
 			if (keys.length > 0) {
-				await redis.del(...keys);
+				await redis.del(keys);
 				console.log(
 					`Deleted ${keys.length} cache entries for ${origin}-${destination}`
 				);
