@@ -10,15 +10,13 @@ import {
 import { users } from "./users";
 import { airports } from "./airports";
 
-export const eventEntityEnum = pgEnum("event_entity", ["BOOKING", "FLIGHT"]);
+export const eventEntityEnum = pgEnum("event_entity", ["BOOKING"]);
 export const eventTypeEnum = pgEnum("event_type", [
 	"BOOKED",
 	"DEPARTED",
 	"ARRIVED",
 	"DELIVERED",
 	"CANCELLED",
-	"STATUS_CHANGED",
-	"NOTE",
 ]);
 
 export const events = pgTable(
