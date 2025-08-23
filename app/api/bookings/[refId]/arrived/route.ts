@@ -9,9 +9,7 @@ import {
 	BookingUpdateParams,
 	BookingUpdateResponse,
 } from "@/types/booking";
-import {
-	withBookingLock,
-} from "@/lib/utils/bookingLock";
+import { withBookingLock } from "@/lib/utils/bookingLock";
 import { eq } from "drizzle-orm";
 
 interface RouteParams {
@@ -29,22 +27,21 @@ export const PATCH = asyncHandler(
 			const result = await withBookingLock(
 				refId,
 				async (lockedBooking) => {
-
 					// Perform the updation within a database transaction
 					const updateResult = await db.transaction(async (tx) => {
-						// Update booking status to DEPARTED
-						// Check if the current status is BOOKED
-						if (lockedBooking.status !== "BOOKED") {
+						// Update booking status to ARRIVED
+						// Check if the current status is DEPARTED
+						if (lockedBooking.status !== "DEPARTED") {
 							throw APIError.badRequest(
-								`Cannot mark as departed: Booking must be in BOOKED status, but current status is ${lockedBooking.status}`
+								`Cannot mark as arrived: Booking must be in DEPARTED status, but current status is ${lockedBooking.status}`
 							);
 						}
 
-						// Update booking status to DEPARTED
+						// Update booking status to ARRIVED
 						const [updatedBooking] = await tx
 							.update(bookings)
 							.set({
-								status: "DEPARTED",
+								status: "ARRIVED",
 								updatedAt: new Date(),
 							})
 							.where(eq(bookings.id, lockedBooking.id))
@@ -60,9 +57,9 @@ export const PATCH = asyncHandler(
 						await tx.insert(events).values({
 							entityType: "BOOKING",
 							entityId: updatedBooking.id,
-							eventType: "DEPARTED",
-							location: updatedBooking.origin,
-							description: `Booking with ref ${updatedBooking.refId} has departed`,
+							eventType: "ARRIVED",
+							location: updatedBooking.destination,
+							description: `Booking with ref ${updatedBooking.refId} has arrived at ${updatedBooking.destination}`,
 						});
 
 						return {
