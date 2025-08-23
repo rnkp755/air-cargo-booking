@@ -135,12 +135,12 @@ const airportData = [
 	{ code: "MXP", name: "Milan Malpensa Airport", timezone: "Europe/Rome" },
 	{
 		code: "MAD",
-		name: "Adolfo Suárez Madrid–Barajas Airport",
+		name: "Adolfo Suárez Madrid-Barajas Airport",
 		timezone: "Europe/Madrid",
 	},
 	{
 		code: "BCN",
-		name: "Josep Tarradellas Barcelona–El Prat Airport",
+		name: "Josep Tarradellas Barcelona-El Prat Airport",
 		timezone: "Europe/Madrid",
 	},
 	{ code: "LIS", name: "Lisbon Airport", timezone: "Europe/Lisbon" },
@@ -255,7 +255,7 @@ const airportData = [
 	},
 	{
 		code: "CGK",
-		name: "Soekarno–Hatta International Airport",
+		name: "Soekarno-Hatta International Airport",
 		timezone: "Asia/Jakarta",
 	},
 	{
@@ -271,6 +271,36 @@ const airportData = [
 	{
 		code: "BLR",
 		name: "Kempegowda International Airport Bengaluru",
+		timezone: "Asia/Kolkata",
+	},
+	{
+		code: "HYD",
+		name: "Rajiv Gandhi International Airport",
+		timezone: "Asia/Kolkata",
+	},
+	{
+		code: "CCU",
+		name: "Netaji Subhas Chandra Bose International Airport",
+		timezone: "Asia/Kolkata",
+	},
+	{
+		code: "MAA",
+		name: "Chennai International Airport",
+		timezone: "Asia/Kolkata",
+	},
+	{
+		code: "CCU",
+		name: "Netaji Subhas Chandra Bose International Airport",
+		timezone: "Asia/Kolkata",
+	},
+	{
+		code: "AMD",
+		name: "Sardar Vallabhbhai Patel International Airport (SVPIA)",
+		timezone: "Asia/Kolkata",
+	},
+	{
+		code: "PNQ",
+		name: "Pune International Airport",
 		timezone: "Asia/Kolkata",
 	},
 	{
