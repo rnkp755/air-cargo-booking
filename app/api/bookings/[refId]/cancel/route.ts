@@ -19,14 +19,15 @@ import {
 import { eq } from "drizzle-orm";
 
 interface RouteParams {
-	params: { refId: string };
+	params: Promise<{ refId: string }>;
 }
 
 export const PATCH = asyncHandler(
 	async (req: Request, { params }: RouteParams) => {
 		// Validate URL parameter
-		const { refId }: BookingCancelParams =
-			BookingCancelParamsSchema.parse(params);
+		const { refId }: BookingCancelParams = BookingCancelParamsSchema.parse(
+			await params
+		);
 
 		// Validate request body
 		const body: BookingCancelInput = await validateBody(

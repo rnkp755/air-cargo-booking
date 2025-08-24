@@ -13,14 +13,15 @@ import { withBookingLock } from "@/lib/utils/bookingLock";
 import { eq } from "drizzle-orm";
 
 interface RouteParams {
-	params: { refId: string };
+	params: Promise<{ refId: string }>;
 }
 
 export const PATCH = asyncHandler(
 	async (req: Request, { params }: RouteParams) => {
 		// Validate URL parameter
-		const { refId }: BookingUpdateParams =
-			BookingUpdateParamsSchema.parse(params);
+		const { refId }: BookingUpdateParams = BookingUpdateParamsSchema.parse(
+			await params
+		);
 
 		try {
 			// Use distributed locking to prevent concurrent modifications

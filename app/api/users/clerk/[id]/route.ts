@@ -6,11 +6,11 @@ import { APIResponse, APIError } from "@/lib/apiResponse";
 import { asyncHandler } from "@/lib/asyncHandler";
 
 interface Params {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
 
 export const GET = asyncHandler(async (_req: Request, { params }: Params) => {
-	const { id } = params;
+	const { id } = await params;
 
 	const user = await db
 		.select()

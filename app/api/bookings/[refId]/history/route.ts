@@ -14,13 +14,13 @@ import {
 import { eq, desc } from "drizzle-orm";
 
 interface RouteParams {
-	params: { refId: string };
+	params: Promise<{ refId: string }>;
 }
 
 export const GET = asyncHandler(
 	async (req: Request, { params }: RouteParams) => {
 		// Validate the reference ID parameter
-		const { refId } = BookingHistoryParamsSchema.parse(params);
+		const { refId } = BookingHistoryParamsSchema.parse(await params);
 
 		// Fetch booking with flights
 		const bookingWithFlights = await db
@@ -79,7 +79,6 @@ export const GET = asyncHandler(
 			.from(events)
 			.where(eq(events.entityId, bookingData.bookingId))
 			.orderBy(desc(events.createdAt)); // Most recent events first
-
 
 		// Combine and sort all events chronologically (most recent first)
 		const allEvents = [
