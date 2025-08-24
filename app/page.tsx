@@ -44,7 +44,7 @@ export default function HomePage() {
 								href="/my-bookings"
 								variant="outline"
 								size="lg"
-								className="text-lg px-8 bg-transparent hover:bg-accent hover:text-accent-foreground transition-colors"
+								className="text-lg px-8 bg-transparent hover:bg-secondary hover:text-foreground transition-colors"
 							>
 								My Bookings
 							</NavigationButton>
