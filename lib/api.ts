@@ -131,6 +131,23 @@ export interface BookingHistoryResponse {
 	timestamp: string;
 }
 
+export interface getMyBookingsResponse {
+	success: boolean;
+	message: string;
+	data: {
+		id: string;
+		refId: string;
+		origin: string;
+		destination: string;
+		pieces: number;
+		weightKg: number;
+		status: string;
+		createdAt: string;
+		updatedAt: string;
+	}[];
+	timestamp: string;
+}
+
 // API functions
 export const searchAirports = async (
 	query: string
@@ -179,5 +196,10 @@ export const arriveBooking = async (refId: string) => {
 
 export const deliverBooking = async (refId: string) => {
 	const response = await api.patch(`/bookings/${refId}/delivered`);
+	return response.data;
+};
+
+export const getMyBookings = async (): Promise<getMyBookingsResponse> => {
+	const response = await api.get(`/bookings/`);
 	return response.data;
 };
