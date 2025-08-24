@@ -12,16 +12,16 @@ export const metadata: Metadata = {
 	description:
 		"Fast, reliable air cargo booking platform for global shipping solutions",
 	keywords: [
+		"go comet",
 		"air cargo",
 		"shipping",
 		"logistics",
-		"freight",
 		"booking",
 		"global shipping",
 	],
-	authors: [{ name: "AirCargo Pro" }],
-	creator: "AirCargo Pro",
-	publisher: "AirCargo Pro",
+	authors: [{ name: "Raushan Kumar Thakur" }],
+	creator: "Raushan Kumar Thakur",
+	publisher: "Raushan Kumar Thakur",
 	robots: {
 		index: true,
 		follow: true,

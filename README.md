@@ -135,7 +135,7 @@ The seeding process will create:
 pnpm dev
 ```
 
-The API will be available at `http://localhost:3000/api`
+The website will be available at `http://localhost:3000/`
 
 ## 📖 API Documentation
 
