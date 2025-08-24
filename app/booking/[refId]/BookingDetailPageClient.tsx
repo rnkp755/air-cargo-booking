@@ -4,35 +4,15 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
 	Loader2,
-	Package,
-	Plane,
-	MapPin,
-	Clock,
-	CheckCircle,
-	Circle,
 	AlertCircle,
-	XCircle,
 } from "lucide-react";
 import {
-	cancelBooking,
 	getBookingHistory,
 	type BookingHistoryResponse,
 } from "@/lib/api";
-import { removeStoredBooking } from "@/lib/storage";
-import { toast } from "sonner";
 import BookingInfoPage from "./BookingInfos";
 
 export default function BookingDetailPageClient() {
@@ -42,7 +22,6 @@ export default function BookingDetailPageClient() {
 	const [booking, setBooking] = useState<BookingHistoryResponse | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [cancelling, setCancelling] = useState(false);
 
 	useEffect(() => {
 		if (refId) {

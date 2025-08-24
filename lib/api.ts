@@ -176,3 +176,8 @@ export const arriveBooking = async (refId: string) => {
 	const response = await api.patch(`/bookings/${refId}/arrived`);
 	return response.data;
 };
+
+export const deliverBooking = async (refId: string) => {
+	const response = await api.patch(`/bookings/${refId}/delivered`);
+	return response.data;
+};

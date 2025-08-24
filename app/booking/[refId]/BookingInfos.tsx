@@ -9,6 +9,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
 	Loader2,
 	Package,
 	Plane,
@@ -18,8 +24,16 @@ import {
 	Circle,
 	AlertCircle,
 	XCircle,
+	ChevronDown,
+	RefreshCw,
 } from "lucide-react";
-import { cancelBooking } from "@/lib/api";
+import {
+	cancelBooking,
+	departBooking,
+	arriveBooking,
+	deliverBooking,
+	getBookingHistory,
+} from "@/lib/api";
 import type { BookingHistoryResponse } from "@/lib/api";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +48,7 @@ export default function BookingInfoPage({
 	refId: string;
 }) {
 	const [cancelling, setCancelling] = useState(false);
+	const [updatingStatus, setUpdatingStatus] = useState(false);
 
 	const handleCancelBooking = async () => {
 		if (
@@ -54,12 +69,84 @@ export default function BookingInfoPage({
 				booking.data.booking.status = "CANCELLED";
 				setBooking({ ...booking });
 			}
-
 		} catch (err) {
 			console.error("Cancel booking error:", err);
 			alert("Failed to cancel booking. Please try again.");
 		} finally {
 			setCancelling(false);
+		}
+	};
+
+	const handleStatusUpdate = async (newStatus: string) => {
+		if (!booking) return;
+
+		const statusConfirmations = {
+			DEPARTED: "Mark this booking as departed?",
+			ARRIVED: "Mark this booking as arrived?",
+			DELIVERED: "Mark this booking as delivered?",
+			CANCELLED: "Are you sure you want to cancel this booking?",
+		};
+
+		if (
+			!confirm(
+				statusConfirmations[
+					newStatus as keyof typeof statusConfirmations
+				]
+			)
+		) {
+			return;
+		}
+
+		setUpdatingStatus(true);
+		try {
+			let response;
+			switch (newStatus) {
+				case "DEPARTED":
+					response = await departBooking(refId);
+					break;
+				case "ARRIVED":
+					response = await arriveBooking(refId);
+					break;
+				case "DELIVERED":
+					response = await deliverBooking(refId);
+					break;
+				case "CANCELLED":
+					response = await cancelBooking(refId, "Cancelled by admin");
+					break;
+				default:
+					throw new Error("Invalid status");
+			}
+
+			if (response.success) {
+				toast.success(`Booking status updated to ${newStatus}`);
+				booking.data.booking.status = newStatus;
+				setBooking({ ...booking });
+
+				const bookingHistory = await getBookingHistory(refId);
+				setBooking(bookingHistory); 
+			}
+		} catch (err) {
+			console.error("Status update error:", err);
+			toast.error("Failed to update status. Please try again.");
+		} finally {
+			setUpdatingStatus(false);
+		}
+	};
+
+	const getAvailableStatusUpdates = (currentStatus: string) => {
+		switch (currentStatus.toUpperCase()) {
+			case "BOOKED":
+				return ["DEPARTED", "CANCELLED"];
+			case "DEPARTED":
+				return ["ARRIVED", "CANCELLED"];
+			case "ARRIVED":
+				return ["DELIVERED", "CANCELLED"];
+			case "CANCELLED":
+				return [];
+			case "DELIVERED":
+				return [];
+			default:
+				return [];
 		}
 	};
 
@@ -138,23 +225,82 @@ export default function BookingInfoPage({
 									.replace("_", " ")
 									.toUpperCase()}
 							</Badge>
-							{booking.data.booking.status.toLowerCase() !==
-								"delivered" && (
-								<Button
-									variant="destructive"
-									onClick={handleCancelBooking}
-									disabled={cancelling}
-								>
-									{cancelling ? (
-										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											Cancelling...
-										</>
-									) : (
-										"Cancel Booking"
-									)}
-								</Button>
+
+							{/* Update Status Dropdown */}
+							{getAvailableStatusUpdates(
+								booking.data.booking.status
+							).length > 0 && (
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="outline"
+											disabled={updatingStatus}
+											className="gap-2"
+										>
+											{updatingStatus ? (
+												<>
+													<Loader2 className="h-4 w-4 animate-spin" />
+													Updating...
+												</>
+											) : (
+												<>
+													<RefreshCw className="h-4 w-4" />
+													Update Status
+													<ChevronDown className="h-4 w-4" />
+												</>
+											)}
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										{getAvailableStatusUpdates(
+											booking.data.booking.status
+										).map((status) => (
+											<DropdownMenuItem
+												key={status}
+												onClick={() =>
+													handleStatusUpdate(status)
+												}
+												className="cursor-pointer"
+											>
+												{status === "CANCELLED" ? (
+													<XCircle className="mr-2 h-4 w-4 text-red-500" />
+												) : status === "DEPARTED" ? (
+													<Plane className="mr-2 h-4 w-4 text-orange-500" />
+												) : status === "ARRIVED" ? (
+													<MapPin className="mr-2 h-4 w-4 text-blue-500" />
+												) : status === "DELIVERED" ? (
+													<CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+												) : null}
+												Mark as {status}
+											</DropdownMenuItem>
+										))}
+									</DropdownMenuContent>
+								</DropdownMenu>
 							)}
+
+							{/* Legacy Cancel Button (keeping for backwards compatibility) */}
+							{booking.data.booking.status.toLowerCase() !==
+								"delivered" &&
+								booking.data.booking.status.toLowerCase() !==
+									"cancelled" &&
+								getAvailableStatusUpdates(
+									booking.data.booking.status
+								).length === 0 && (
+									<Button
+										variant="destructive"
+										onClick={handleCancelBooking}
+										disabled={cancelling}
+									>
+										{cancelling ? (
+											<>
+												<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+												Cancelling...
+											</>
+										) : (
+											"Cancel Booking"
+										)}
+									</Button>
+								)}
 						</div>
 					</div>
 				</div>
