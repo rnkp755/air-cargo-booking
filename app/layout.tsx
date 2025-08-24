@@ -9,7 +9,6 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "AirCargo Pro - Professional Air Cargo Booking",
   description: "Fast, reliable air cargo booking platform for global shipping solutions",
-  generator: "v0.app",
   keywords: ["air cargo", "shipping", "logistics", "freight", "booking", "global shipping"],
   authors: [{ name: "AirCargo Pro" }],
   creator: "AirCargo Pro",

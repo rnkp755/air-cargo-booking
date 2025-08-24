@@ -1,3 +1,14 @@
+import { LoadingSpinner } from "@/components/loading-spinner";
+
 export default function Loading() {
-  return null
+	return (
+		<div className="flex items-center justify-center min-h-[400px]">
+			<div className="text-center space-y-4">
+				<LoadingSpinner size="lg" />
+				<p className="text-muted-foreground">
+					Preparing booking form...
+				</p>
+			</div>
+		</div>
+	);
 }
