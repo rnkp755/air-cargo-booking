@@ -28,7 +28,7 @@ export async function lockBookingForUpdate(refId: string) {
  * Validates if a booking can be cancelled based on its current status
  */
 export function validateCancellationEligibility(bookingStatus: string): void {
-	const nonCancellableStatuses = ["ARRIVED", "DELIVERED", "CANCELLED"];
+	const nonCancellableStatuses = ["DELIVERED", "CANCELLED"];
 
 	if (nonCancellableStatuses.includes(bookingStatus)) {
 		throw APIError.badRequest(

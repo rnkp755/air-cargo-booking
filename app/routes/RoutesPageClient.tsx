@@ -34,6 +34,7 @@ import { searchRoutes } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import SearchForm from "./SearchForm";
+import { toast } from "sonner";
 
 interface BookingFormData {
 	pieces: string;
@@ -98,7 +99,7 @@ export default function RoutesPageClient() {
 			if (response.success) {
 				// Close the modal first
 				setShowBookingModal(false);
-
+				toast.success("Booking created successfully");
 				// Navigate to booking detail page using the booking ID from response
 				router.push(`/booking/${response.data.refId}`);
 			} else {
