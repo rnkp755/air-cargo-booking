@@ -13,11 +13,9 @@ export const UserSignupSchema = z.object({
 export type UserSignupInput = z.infer<typeof UserSignupSchema>;
 export type UserRole = z.infer<typeof UserRoleEnum>;
 
-
 export const UserLoginSchema = z.object({
 	email: z.email("Invalid email address"),
 	password: z.string().min(6, "Password must be at least 6 characters"),
-	role: UserRoleEnum.optional(),
 });
 
 export type UserLoginInput = z.infer<typeof UserLoginSchema>;
