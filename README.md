@@ -6,6 +6,7 @@
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Next.js 15**  | • Full-stack capabilities with API routes<br>• Built-in optimizations (code splitting, image optimization)<br>• Server-side rendering for better SEO<br>• Excellent TypeScript support                                |
 | **TypeScript**  | • Strong type safety prevents runtime errors<br>• Better developer experience with IntelliSense<br>• Enhanced maintainability for large codebases<br>• Industry standard for enterprise applications                  |
+| **JWT Auth**    | • Stateless authentication for scalability<br>• Secure token-based session management<br>• Role-based access control support<br>• Industry standard for API authentication                                            |
 | **pnpm**        | • 3x faster than npm, 2x faster than Yarn<br>• Efficient disk space usage with content-addressed storage<br>• Better monorepo support<br>• Strict dependency resolution prevents phantom dependencies                 |
 | **Drizzle ORM** | • Type-safe SQL queries with zero runtime overhead<br>• Auto-completion and compile-time query validation<br>• Lightweight compared to Prisma (~90% smaller bundle)<br>• Direct SQL-like syntax for complex queries   |
 | **PostgreSQL**  | • ACID compliance for data integrity<br>• Excellent support for complex queries and JSON operations<br>• Horizontal scaling capabilities<br>• Strong ecosystem and performance for enterprise workloads               |
@@ -139,7 +140,122 @@ The website will be available at `http://localhost:3000/`
 
 ## 📖 API Documentation
 
-### 🔍 Search Routes
+### � Authentication
+
+The API uses JWT-based authentication with access and refresh tokens. All booking-related endpoints require authentication.
+
+#### 🆕 User Registration
+
+**POST** `/api/users/signup`
+
+Register a new user account.
+
+> **Note:** Admin signup is only allowed from backend
+
+```json
+{
+	"name": "John Doe",
+	"email": "user@example.com",
+	"password": "SecurePassword123",
+	"role": "USER"
+}
+```
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "User registered successfully",
+	"data": {
+		"id": "user-uuid",
+		"name": "John Doe",
+		"email": "user@example.com",
+		"role": "USER",
+		"createdAt": "2025-08-25T12:00:00.000Z"
+	},
+	"timestamp": "2025-08-25T12:00:00.000Z"
+}
+```
+
+#### 🔑 User Login
+
+**POST** `/api/users/login`
+
+Authenticate user and receive tokens.
+
+```json
+{
+	"email": "user@example.com",
+	"password": "SecurePassword123"
+}
+```
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "",
+	"data": {
+		"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+		"refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+		"user": {
+			"id": "user-uuid",
+			"name": "John Doe",
+			"email": "user@example.com",
+			"role": "USER",
+			"createdAt": "2025-08-25T12:00:00.000Z"
+		}
+	},
+	"timestamp": "2025-08-25T12:00:00.000Z"
+}
+```
+
+#### 👤 Get Current User
+
+**GET** `/api/auth/me`
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Get currently authenticated user information.
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "",
+	"data": {
+		"id": "user-uuid",
+		"name": "John Doe",
+		"email": "user@example.com",
+		"role": "USER",
+		"createdAt": "2025-08-25T12:00:00.000Z"
+	},
+	"timestamp": "2025-08-25T12:00:00.000Z"
+}
+```
+
+#### 🚪 Logout
+
+**POST** `/api/auth/logout`
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Logout user and invalidate tokens.
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "Logged out successfully",
+	"timestamp": "2025-08-25T12:00:00.000Z"
+}
+```
+
+### �🔍 Search Routes
 
 **POST** `/api/routes`
 
@@ -189,9 +305,42 @@ Search for available flight routes between airports.
 }
 ```
 
+### 📋 Get User Bookings
+
+**GET** `/api/bookings`
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+Retrieve all bookings for the authenticated user.
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "",
+	"data": [
+		{
+			"id": "booking-uuid",
+			"refId": "DEL_DXB_ABC123",
+			"origin": "DEL",
+			"destination": "DXB",
+			"pieces": 30,
+			"weightKg": 140,
+			"status": "BOOKED",
+			"createdAt": "2025-08-24T12:00:00.000Z",
+			"updatedAt": "2025-08-24T12:00:00.000Z"
+		}
+	],
+	"timestamp": "2025-08-25T12:00:00.000Z"
+}
+```
+
 ### 📦 Create Booking
 
 **POST** `/api/bookings/create`
+
+**Headers:** `Authorization: Bearer <access_token>`
 
 Create a new cargo booking for selected flights.
 
@@ -241,6 +390,8 @@ Create a new cargo booking for selected flights.
 
 **GET** `/api/bookings/{refId}/history`
 
+**Headers:** `Authorization: Bearer <access_token>`
+
 Retrieve complete booking history including all events.
 
 **Response:**
@@ -285,12 +436,21 @@ Retrieve complete booking history including all events.
 ### 🚚 Update Booking Status
 
 **PATCH** `/api/bookings/{refId}/departed`
+
+**Headers:** `Authorization: Bearer <access_token>`
+
 Mark booking as departed from origin.
 
-**PATCH** `/api/bookings/{refId}/arrived`  
+**PATCH** `/api/bookings/{refId}/arrived`
+
+**Headers:** `Authorization: Bearer <access_token>`
+
 Mark booking as arrived at destination.
 
 **PATCH** `/api/bookings/{refId}/cancel`
+
+**Headers:** `Authorization: Bearer <access_token>`
+
 Cancel the booking with reason.
 
 ```json
@@ -318,9 +478,11 @@ pnpm test:api
 
 The test suite includes:
 
+-   **Authentication Tests**: User registration, login, and token validation
 -   **Route Search Tests**: Validates route discovery algorithm
--   **Booking Creation**: Tests direct and transit route bookings
+-   **Booking Creation**: Tests direct and transit route bookings with authentication
 -   **Lifecycle Management**: Complete booking flow (BOOKED → DEPARTED → ARRIVED)
+-   **Authorization Tests**: Role-based access control validation
 -   **Error Handling**: Invalid input and edge case validation
 -   **Event Timeline**: Verifies proper event logging
 
@@ -334,10 +496,13 @@ pnpm seed-db
 
 The tests will:
 
-1. Search for routes between DEL and DXB
-2. Create multiple booking types
-3. Test complete booking lifecycle
-4. Validate event timeline accuracy
+1. Test user registration and login flow
+2. Validate JWT token authentication
+3. Search for routes between DEL and DXB
+4. Create multiple booking types with proper authorization
+5. Test complete booking lifecycle
+6. Validate event timeline accuracy
+7. Test role-based access control
 
 ## 🛠️ Development Scripts
 
@@ -375,6 +540,8 @@ The tests will:
 
 ### Security
 
+-   **Authentication**: JWT-based authentication with access and refresh tokens
+-   **Authorization**: Role-based access control (USER, ADMIN)
 -   **Input Validation**: Zod schemas for all API inputs
 -   **SQL Injection**: Drizzle ORM provides parameterized queries
 -   **Rate Limiting**: Implement for production deployment

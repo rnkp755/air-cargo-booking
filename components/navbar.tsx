@@ -151,7 +151,9 @@ export function Navbar() {
 													className="flex items-center cursor-pointer"
 												>
 													<Package className="mr-2 h-4 w-4" />
-													My Bookings
+													{user?.role === "ADMIN"
+														? "All Bookings"
+														: "My Bookings"}
 												</Link>
 											</DropdownMenuItem>
 											<DropdownMenuItem asChild>

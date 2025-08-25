@@ -10,7 +10,9 @@ export const GET = asyncHandler(async (req: Request) => {
 	const query = searchParams.get("q");
 
 	if (!query || query.trim().length < 2) {
-		return NextResponse.json([], { status: 200 });
+		return NextResponse.json(
+			new APIResponse(true, "Airports fetched successfully", [])
+		);
 	}
 
 	const searchTerm = `%${query.trim()}%`;
@@ -38,5 +40,7 @@ export const GET = asyncHandler(async (req: Request) => {
 		timezone: airport.timezone,
 	}));
 
-	return NextResponse.json(new APIResponse(true, "Airports fetched successfully", formattedResults));
+	return NextResponse.json(
+		new APIResponse(true, "Airports fetched successfully", formattedResults)
+	);
 });

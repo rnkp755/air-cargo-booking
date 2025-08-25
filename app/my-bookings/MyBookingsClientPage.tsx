@@ -249,7 +249,7 @@ export default function MyBookingsClientPage() {
 							<div className="flex items-center justify-between">
 								<div>
 									<h1 className="text-3xl font-bold mb-2">
-										My Bookings
+										{user?.role === "ADMIN" ? "All Bookings" : "My Bookings"}
 									</h1>
 									<p className="text-muted-foreground">
 										{bookings.length === 0
