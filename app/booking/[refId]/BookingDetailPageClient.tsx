@@ -4,15 +4,10 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ProtectedRoute } from "@/components/protected-route";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-	Loader2,
-	AlertCircle,
-} from "lucide-react";
-import {
-	getBookingHistory,
-	type BookingHistoryResponse,
-} from "@/lib/api";
+import { Loader2, AlertCircle } from "lucide-react";
+import { getBookingHistory, type BookingHistoryResponse } from "@/lib/api";
 import BookingInfoPage from "./BookingInfos";
 
 export default function BookingDetailPageClient() {
@@ -75,16 +70,18 @@ export default function BookingDetailPageClient() {
 	}
 
 	return (
-		<div className="min-h-screen flex flex-col">
-			<Navbar />
+		<ProtectedRoute fallbackMessage="Please sign in to view booking details.">
+			<div className="min-h-screen flex flex-col">
+				<Navbar />
 
-			<BookingInfoPage 
-				booking={booking} 
-				setBooking={setBooking} 
-				refId={refId} 
-			/>
+				<BookingInfoPage
+					booking={booking}
+					setBooking={setBooking}
+					refId={refId}
+				/>
 
-			<Footer />
-		</div>
+				<Footer />
+			</div>
+		</ProtectedRoute>
 	);
 }

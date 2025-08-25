@@ -8,8 +8,10 @@ import { eq } from "drizzle-orm";
 
 export interface AuthenticatedUser {
 	id: string;
+	name: string;
 	email: string;
 	role: "ADMIN" | "CUSTOMER";
+	createdAt: string;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -27,7 +29,6 @@ function extractToken(req: Request): string | null {
 	// Then try with cookies
 	const cookieHeader = req.headers.get("cookie");
 	if (cookieHeader) {
-		console.log("Cookie Header:", cookieHeader);
 		const cookies = cookieHeader.split(";").reduce((acc, cookie) => {
 			const [key, value] = cookie.trim().split("=");
 			acc[key] = value;
@@ -35,6 +36,7 @@ function extractToken(req: Request): string | null {
 		}, {} as Record<string, string>);
 
 		if (cookies.accessToken) {
+			console.log("Access Token found !!")
 			return cookies.accessToken;
 		}
 	}
@@ -58,12 +60,14 @@ async function authenticateUser(
 			process.env.ACCESS_TOKEN_SECRET!
 		) as any;
 
-		// Verify user still exists in database
+		// Verify user exists in database
 		const [user] = await db
 			.select({
 				id: users.id,
+				name: users.name,
 				email: users.email,
 				role: users.role,
+				createdAt: users.createdAt,
 			})
 			.from(users)
 			.where(eq(users.id, decoded.id))
@@ -75,8 +79,10 @@ async function authenticateUser(
 
 		return {
 			id: user.id,
+			name: user.name,
 			email: user.email,
 			role: user.role,
+			createdAt: user.createdAt.toISOString(),
 		};
 	} catch (error) {
 		return null;

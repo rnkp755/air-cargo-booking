@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -66,8 +67,10 @@ html {
 					enableSystem
 					disableTransitionOnChange
 				>
-					<ErrorBoundary>{children}</ErrorBoundary>
-					<Toaster position="top-right" richColors />
+					<AuthProvider>
+						<ErrorBoundary>{children}</ErrorBoundary>
+					</AuthProvider>
+					<Toaster position="top-right" richColors duration={2000} />
 				</ThemeProvider>
 			</body>
 		</html>

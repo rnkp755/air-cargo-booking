@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import "dotenv/config";
 
 interface GenerateAccessTokenPayload {
 	id: string;
@@ -28,10 +29,7 @@ export const generateAccessToken = async function (
 			email: user.email,
 			role: user.role,
 		},
-		process.env.ACCESS_TOKEN_SECRET!,
-		{
-			expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m",
-		}
+		process.env.ACCESS_TOKEN_SECRET!
 	);
 };
 
@@ -42,9 +40,6 @@ export const generateRefreshToken = async function (
 		{
 			id: userId,
 		},
-		process.env.REFRESH_TOKEN_SECRET!,
-		{
-			expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d",
-		}
+		process.env.REFRESH_TOKEN_SECRET!
 	);
 };
