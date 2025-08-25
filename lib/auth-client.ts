@@ -45,8 +45,12 @@ export class AuthClient {
 				this.setAuthState({ user: response.data, isLoading: false });
 				return;
 			}
-		} catch (error) {
-			console.error("Auth initialization error:", error);
+		} catch (error: any) {
+			// Only log errors if they're not authentication failures (401)
+			// This prevents flooding console with expected auth failures on public pages
+			if (error?.response?.status !== 401) {
+				console.error("Auth initialization error:", error);
+			}
 		}
 
 		this.setAuthState({ user: null, isLoading: false });
@@ -115,12 +119,8 @@ export class AuthClient {
 			const response = await signupUser(data);
 
 			if (response.success) {
-				// After signup, automatically log in
-				const loginResult = await this.login({
-					email: data.email,
-					password: data.password,
-				});
-				return loginResult;
+				this.setAuthState({ isLoading: false });
+				return { success: true, message: response.message };
 			} else {
 				this.setAuthState({ isLoading: false });
 				return { success: false, message: response.message };

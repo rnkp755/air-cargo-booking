@@ -138,8 +138,17 @@ export default function AuthPage() {
 		try {
 			const result = await signup(signupForm);
 			if (result.success) {
-				toast.success("Account created successfully! Welcome aboard!");
-				router.push("/");
+				toast.success(
+					"Account created successfully! You can now sign in."
+				);
+				// Switch to login mode and clear signup form
+				setMode("login");
+				setSignupForm({
+					name: "",
+					email: "",
+					password: "",
+				});
+				setErrors({});
 			} else {
 				toast.error(result.message);
 			}

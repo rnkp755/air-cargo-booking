@@ -12,6 +12,15 @@ export const api = axios.create({
 	withCredentials: true, // Include cookies in requests
 });
 
+// Public API client for endpoints that don't require authentication
+export const publicApi = axios.create({
+	baseURL: API_BASE_URL,
+	headers: {
+		"Content-Type": "application/json",
+	},
+	withCredentials: false, // Don't include cookies for public endpoints
+});
+
 export interface UserLoginRequest {
 	email: string;
 	password: string;
@@ -163,7 +172,7 @@ export interface getMyBookingsResponse {
 export const searchAirports = async (
 	query: string
 ): Promise<AirportSearchResult> => {
-	const response = await api.get("/airports/search", {
+	const response = await publicApi.get("/airports/search", {
 		params: { q: query },
 	});
 	return response.data;
@@ -172,7 +181,7 @@ export const searchAirports = async (
 export const searchRoutes = async (
 	data: RouteSearchRequest
 ): Promise<RouteSearchResponse> => {
-	const response = await api.post("/routes", data);
+	const response = await publicApi.post("/routes", data);
 	return response.data;
 };
 
@@ -295,5 +304,11 @@ export const signupUser = async (data: {
 
 export const logoutUser = async (): Promise<LogoutResponse> => {
 	const response = await api.post("/auth/logout");
+	return response.data;
+};
+
+// Public API functions (no authentication required)
+export const getMetrics = async (): Promise<string> => {
+	const response = await publicApi.get("/metrics");
 	return response.data;
 };
