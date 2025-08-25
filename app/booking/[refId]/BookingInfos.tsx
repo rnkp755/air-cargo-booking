@@ -37,6 +37,7 @@ import {
 import type { BookingHistoryResponse } from "@/lib/api";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth-client";
 
 export default function BookingInfoPage({
 	booking,
@@ -47,6 +48,7 @@ export default function BookingInfoPage({
 	setBooking: any;
 	refId: string;
 }) {
+	const { user } = useAuth();
 	const [cancelling, setCancelling] = useState(false);
 	const [updatingStatus, setUpdatingStatus] = useState(false);
 
@@ -123,7 +125,7 @@ export default function BookingInfoPage({
 				setBooking({ ...booking });
 
 				const bookingHistory = await getBookingHistory(refId);
-				setBooking(bookingHistory); 
+				setBooking(bookingHistory);
 			}
 		} catch (err) {
 			console.error("Status update error:", err);
@@ -134,6 +136,7 @@ export default function BookingInfoPage({
 	};
 
 	const getAvailableStatusUpdates = (currentStatus: string) => {
+		if (user?.role === "CUSTOMER") return ["CANCELLED"];
 		switch (currentStatus.toUpperCase()) {
 			case "BOOKED":
 				return ["DEPARTED", "CANCELLED"];
