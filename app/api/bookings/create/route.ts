@@ -17,134 +17,140 @@ import {
 	validateFlightRoute,
 	ensureUniqueRefId,
 } from "@/lib/utils/booking";
+import {
+	requireCustomer,
+	AuthenticatedRequest,
+} from "@/app/api/users/middleware";
 import { eq } from "drizzle-orm";
 
-export const POST = asyncHandler(async (req: Request) => {
-	const body: BookingInput = await validateBody(req, BookingInputSchema);
+export const POST = requireCustomer(
+	asyncHandler(async (req: AuthenticatedRequest) => {
+		const body: BookingInput = await validateBody(req, BookingInputSchema);
 
-	const { origin, destination, pieces, weightKg, flightInstanceIds } = body;
+		const { origin, destination, pieces, weightKg, flightInstanceIds } =
+			body;
 
-	// Validate and get flight instances
-	const validatedFlights = await validateFlightRoute(
-		flightInstanceIds,
-		origin,
-		destination
-	);
+		const validatedFlights = await validateFlightRoute(
+			flightInstanceIds,
+			origin,
+			destination
+		);
 
-	// Generate unique reference ID
-	const baseRefId = generateBookingRefId(origin, destination);
-	const refId = await ensureUniqueRefId(baseRefId);
+		const baseRefId = generateBookingRefId(origin, destination);
+		const refId = await ensureUniqueRefId(baseRefId);
 
-	try {
-		// Start transaction
-		const result = await db.transaction(async (tx) => {
-			// Create booking record
-			const [booking] = await tx
-				.insert(bookings)
-				.values({
-					refId,
-					origin,
-					destination,
-					pieces,
-					weightKg,
-					status: "BOOKED",
-				})
-				.returning();
+		try {
+			const result = await db.transaction(async (tx) => {
+				const [booking] = await tx
+					.insert(bookings)
+					.values({
+						refId,
+						origin,
+						destination,
+						pieces,
+						weightKg,
+						status: "BOOKED",
+						createdBy: req.user!.id,
+					})
+					.returning();
 
-			// Create booking-flight associations
-			const bookingFlightData = validatedFlights.map((flight, index) => ({
-				bookingId: booking.id,
-				flightInstanceId: flight.id,
-				hopOrder: (index + 1) as 1 | 2,
-			}));
+				const bookingFlightData = validatedFlights.map(
+					(flight, index) => ({
+						bookingId: booking.id,
+						flightInstanceId: flight.id,
+						hopOrder: (index + 1) as 1 | 2,
+					})
+				);
 
-			await tx.insert(bookingFlights).values(bookingFlightData);
+				await tx.insert(bookingFlights).values(bookingFlightData);
 
-			console.log(`Booking created with ref ${refId} and ID ${booking.id}`);
+				console.log(
+					`Booking created with ref ${refId} and ID ${booking.id}`
+				);
 
-			// Create booking event
-			await tx.insert(events).values({
-				entityType: "BOOKING",
-				entityId: booking.id,
-				eventType: "BOOKED",
-				location: origin,
-				description: `Booking created with reference ${refId}`,
+				await tx.insert(events).values({
+					entityType: "BOOKING",
+					entityId: booking.id,
+					eventType: "BOOKED",
+					location: origin,
+					description: `Booking created with reference ${refId}`,
+					createdBy: req.user!.id,
+				});
+
+				console.log(`Event created for booking ref ${refId} creation`);
+
+				return booking;
 			});
 
-			console.log(`Event created for booking ref ${refId} creation`);
+			const completeBooking = await db
+				.select({
+					// Booking fields
+					id: bookings.id,
+					refId: bookings.refId,
+					origin: bookings.origin,
+					destination: bookings.destination,
+					pieces: bookings.pieces,
+					weightKg: bookings.weightKg,
+					status: bookings.status,
+					createdAt: bookings.createdAt,
+					updatedAt: bookings.updatedAt,
+					// Flight fields
+					flightInstanceId: flightInstances.id,
+					flightNumber: flightInstances.flightNumber,
+					airlineName: flightInstances.airlineName,
+					flightOrigin: flightInstances.origin,
+					flightDestination: flightInstances.destination,
+					departureAt: flightInstances.departureAt,
+					arrivalAt: flightInstances.arrivalAt,
+					hopOrder: bookingFlights.hopOrder,
+				})
+				.from(bookings)
+				.innerJoin(
+					bookingFlights,
+					eq(bookings.id, bookingFlights.bookingId)
+				)
+				.innerJoin(
+					flightInstances,
+					eq(bookingFlights.flightInstanceId, flightInstances.id)
+				)
+				.where(eq(bookings.id, result.id))
+				.orderBy(bookingFlights.hopOrder);
 
-			return booking;
-		});
+			if (completeBooking.length === 0) {
+				throw APIError.internal("Failed to retrieve created booking");
+			}
 
-		// Fetch complete booking data with flights for response
-		const completeBooking = await db
-			.select({
-				// Booking fields
-				id: bookings.id,
-				refId: bookings.refId,
-				origin: bookings.origin,
-				destination: bookings.destination,
-				pieces: bookings.pieces,
-				weightKg: bookings.weightKg,
-				status: bookings.status,
-				createdAt: bookings.createdAt,
-				updatedAt: bookings.updatedAt,
-				// Flight fields
-				flightInstanceId: flightInstances.id,
-				flightNumber: flightInstances.flightNumber,
-				airlineName: flightInstances.airlineName,
-				flightOrigin: flightInstances.origin,
-				flightDestination: flightInstances.destination,
-				departureAt: flightInstances.departureAt,
-				arrivalAt: flightInstances.arrivalAt,
-				hopOrder: bookingFlights.hopOrder,
-			})
-			.from(bookings)
-			.innerJoin(
-				bookingFlights,
-				eq(bookings.id, bookingFlights.bookingId)
-			)
-			.innerJoin(
-				flightInstances,
-				eq(bookingFlights.flightInstanceId, flightInstances.id)
-			)
-			.where(eq(bookings.id, result.id))
-			.orderBy(bookingFlights.hopOrder);
+			// Transform data for response
+			const bookingData = completeBooking[0];
+			const response: BookingResponse = {
+				id: bookingData.id,
+				refId: bookingData.refId,
+				origin: bookingData.origin,
+				destination: bookingData.destination,
+				pieces: bookingData.pieces,
+				weightKg: bookingData.weightKg,
+				status: bookingData.status,
+				flights: completeBooking.map((row) => ({
+					flightInstanceId: row.flightInstanceId,
+					flightNumber: row.flightNumber,
+					airlineName: row.airlineName,
+					origin: row.flightOrigin,
+					destination: row.flightDestination,
+					departureAt: row.departureAt.toISOString(),
+					arrivalAt: row.arrivalAt.toISOString(),
+					hopOrder: row.hopOrder,
+				})),
+				createdAt: bookingData.createdAt.toISOString(),
+				updatedAt: bookingData.updatedAt.toISOString(),
+			};
 
-		if (completeBooking.length === 0) {
-			throw APIError.internal("Failed to retrieve created booking");
+			return NextResponse.json(
+				new APIResponse(true, "Booking created successfully", response),
+				{ status: 201 }
+			);
+		} catch (error) {
+			console.error("Booking creation failed:", error);
+			throw error;
 		}
-
-		// Transform data for response
-		const bookingData = completeBooking[0];
-		const response: BookingResponse = {
-			id: bookingData.id,
-			refId: bookingData.refId,
-			origin: bookingData.origin,
-			destination: bookingData.destination,
-			pieces: bookingData.pieces,
-			weightKg: bookingData.weightKg,
-			status: bookingData.status,
-			flights: completeBooking.map((row) => ({
-				flightInstanceId: row.flightInstanceId,
-				flightNumber: row.flightNumber,
-				airlineName: row.airlineName,
-				origin: row.flightOrigin,
-				destination: row.flightDestination,
-				departureAt: row.departureAt.toISOString(),
-				arrivalAt: row.arrivalAt.toISOString(),
-				hopOrder: row.hopOrder,
-			})),
-			createdAt: bookingData.createdAt.toISOString(),
-			updatedAt: bookingData.updatedAt.toISOString(),
-		};
-
-		return NextResponse.json(
-			new APIResponse(true, "Booking created successfully", response),
-			{ status: 201 }
-		);
-	} catch (error) {
-		console.error("Booking creation failed:", error);
-		throw error;
-	}
-});
+	})
+);

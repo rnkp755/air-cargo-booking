@@ -3,12 +3,22 @@ import { userRoleEnum } from "@/db/schema/users";
 
 export const UserRoleEnum = z.enum(userRoleEnum.enumValues);
 
-export const UserSchema = z.object({
-	clerkUserId: z.string().min(1, "clerkUserId is required"),
+export const UserSignupSchema = z.object({
 	name: z.string().min(3, "Name must be at least 3 characters"),
+	email: z.email("Invalid email address"),
+	password: z.string().min(6, "Password must be at least 6 characters"),
 	role: UserRoleEnum.optional(),
 	imageUrl: z.url().optional(),
 });
 
-export type UserInput = z.infer<typeof UserSchema>;
+export type UserSignupInput = z.infer<typeof UserSignupSchema>;
 export type UserRole = z.infer<typeof UserRoleEnum>;
+
+
+export const UserLoginSchema = z.object({
+	email: z.email("Invalid email address"),
+	password: z.string().min(6, "Password must be at least 6 characters"),
+	role: UserRoleEnum.optional(),
+});
+
+export type UserLoginInput = z.infer<typeof UserLoginSchema>;

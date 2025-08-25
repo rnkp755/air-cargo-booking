@@ -11,16 +11,22 @@ import {
 	BookingHistoryParamsSchema,
 	BookingHistoryResponse,
 } from "@/types/booking";
+import {
+	requireAuthenticated,
+	AuthenticatedRequest,
+} from "@/app/api/users/middleware";
+import { validateBookingAccess } from "@/lib/utils/booking";
 import { eq, desc } from "drizzle-orm";
 
 interface RouteParams {
 	params: Promise<{ refId: string }>;
 }
 
-export const GET = asyncHandler(
-	async (req: Request, { params }: RouteParams) => {
-		// Validate the reference ID parameter
+export const GET = requireAuthenticated(
+	asyncHandler(async (req: AuthenticatedRequest, { params }: RouteParams) => {
 		const { refId } = BookingHistoryParamsSchema.parse(await params);
+
+		await validateBookingAccess(refId, req.user!);
 
 		// Fetch booking with flights
 		const bookingWithFlights = await db
@@ -140,5 +146,5 @@ export const GET = asyncHandler(
 				response
 			)
 		);
-	}
+	})
 );

@@ -4,6 +4,44 @@ import { flightInstances } from "@/db/schema/flightInstances";
 import { bookings } from "@/db/schema/bookings";
 import { eq, inArray } from "drizzle-orm";
 import { APIError } from "@/lib/apiResponse";
+import { AuthenticatedUser } from "@/app/api/users/middleware";
+
+/**
+ * Validates that a user has access to a specific booking
+ * Returns booking info if authorized, throws error if not
+ */
+export async function validateBookingAccess(
+	refId: string,
+	user: AuthenticatedUser
+): Promise<{ id: string; createdBy: string | null; refId: string }> {
+	// First, do a lightweight check to verify booking exists
+	const [booking] = await db
+		.select({
+			id: bookings.id,
+			createdBy: bookings.createdBy,
+			refId: bookings.refId,
+		})
+		.from(bookings)
+		.where(eq(bookings.refId, refId))
+		.limit(1);
+
+	if (!booking) {
+		throw APIError.notFound(
+			`Booking with reference ID '${refId}' not found`
+		);
+	}
+
+	// Check authorization: user must be ADMIN or booking owner
+	const isAuthorized = user.role === "ADMIN" || user.id === booking.createdBy;
+
+	if (!isAuthorized) {
+		throw APIError.forbidden(
+			"Access denied. You can only access your own bookings."
+		);
+	}
+
+	return booking;
+}
 
 /**
  * Generates a human-friendly booking reference ID
@@ -19,7 +57,9 @@ export function generateBookingRefId(
 
 	// First 3 characters must be alphabets
 	for (let i = 0; i < 3; i++) {
-		randomCode += alphabets.charAt(Math.floor(Math.random() * alphabets.length));
+		randomCode += alphabets.charAt(
+			Math.floor(Math.random() * alphabets.length)
+		);
 	}
 
 	// Last 3 characters must be digits
@@ -38,8 +78,11 @@ export async function validateFlightRoute(
 	origin: string,
 	destination: string
 ) {
-
-	console.log(`Validating flight route for origin ${origin}, destination ${destination}, flights: ${flightInstanceIds.join(", ")}`);
+	console.log(
+		`Validating flight route for origin ${origin}, destination ${destination}, flights: ${flightInstanceIds.join(
+			", "
+		)}`
+	);
 
 	// Fetch flight instances
 	const flights = await db

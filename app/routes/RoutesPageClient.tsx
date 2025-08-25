@@ -74,7 +74,7 @@ export default function RoutesPageClient() {
 			flightIds,
 			routeType,
 		});
-		setError(null); // Clear any previous errors
+		setError(null); 
 		setShowBookingModal(true);
 	};
 

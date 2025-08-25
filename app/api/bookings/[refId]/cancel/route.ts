@@ -16,25 +16,38 @@ import {
 	withBookingLock,
 	validateCancellationEligibility,
 } from "@/lib/utils/bookingLock";
+import { validateBookingAccess } from "@/lib/utils/booking";
+import {
+	requireAuthenticated,
+	AuthenticatedRequest,
+} from "@/app/api/users/middleware";
 import { eq } from "drizzle-orm";
 
 interface RouteParams {
 	params: Promise<{ refId: string }>;
 }
 
-export const PATCH = asyncHandler(
-	async (req: Request, { params }: RouteParams) => {
-		// Validate URL parameter
+export const PATCH = requireAuthenticated(
+	asyncHandler(async (req: AuthenticatedRequest, { params }: RouteParams) => {
 		const { refId }: BookingCancelParams = BookingCancelParamsSchema.parse(
 			await params
 		);
 
-		// Validate request body
 		const body: BookingCancelInput = await validateBody(
 			req,
 			BookingCancelInputSchema
 		);
 		const { reason } = body;
+
+		// Validate booking access and authorization
+		await validateBookingAccess(refId, req.user!);
+
+		const isAdmin = req.user!.role === "ADMIN";
+		const cancellationReason =
+			reason ||
+			(isAdmin
+				? "Booking cancelled by admin"
+				: "Booking cancelled by user");
 
 		try {
 			// Use distributed locking to prevent concurrent modifications
@@ -44,7 +57,6 @@ export const PATCH = asyncHandler(
 					// Validate that the booking can be cancelled
 					validateCancellationEligibility(lockedBooking.status);
 
-					// Perform the cancellation within a database transaction
 					const cancelResult = await db.transaction(async (tx) => {
 						// Update booking status to CANCELLED
 						const [updatedBooking] = await tx
@@ -66,13 +78,13 @@ export const PATCH = asyncHandler(
 							`Booking with ref ${updatedBooking.refId} marked as CANCELLED`
 						);
 
-						// Create cancellation event
 						await tx.insert(events).values({
 							entityType: "BOOKING",
 							entityId: updatedBooking.id,
 							eventType: "CANCELLED",
 							location: updatedBooking.origin,
-							description: reason || "Booking cancelled by user",
+							description: cancellationReason,
+							createdBy: req.user!.id,
 						});
 
 						console.log(
@@ -82,7 +94,7 @@ export const PATCH = asyncHandler(
 						return {
 							booking: updatedBooking,
 							cancelledAt: new Date().toISOString(),
-							reason: reason || "Booking cancelled by user",
+							reason: cancellationReason,
 						};
 					});
 
@@ -90,7 +102,6 @@ export const PATCH = asyncHandler(
 				}
 			);
 
-			// Prepare response data
 			const response: BookingCancelResponse = {
 				id: result.booking.id,
 				refId: result.booking.refId,
@@ -109,15 +120,13 @@ export const PATCH = asyncHandler(
 		} catch (error) {
 			console.error("Booking cancellation failed:", error);
 
-			// Re-throw known errors
 			if (error instanceof APIError) {
 				throw error;
 			}
 
-			// Handle unexpected errors
 			throw APIError.internal(
 				"Failed to cancel booking due to an unexpected error"
 			);
 		}
-	}
+	})
 );

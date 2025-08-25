@@ -11,7 +11,11 @@ export const api = axios.create({
 	},
 });
 
-// Types based on the Postman collection
+export interface UserLoginRequest {
+	email: string;
+	password: string;
+}
+
 export interface AirportSearchResult {
 	success: boolean;
 	message: string;

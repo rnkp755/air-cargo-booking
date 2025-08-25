@@ -32,7 +32,6 @@ export const GET = asyncHandler(async (req: Request) => {
 		.limit(10)
 		.orderBy(airports.code);
 
-	// Transform results to match the expected format
 	const formattedResults = results.map((airport) => ({
 		code: airport.code,
 		name: airport.name,

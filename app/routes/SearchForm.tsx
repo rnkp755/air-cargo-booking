@@ -19,7 +19,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
-// Simple debounce utility
+// Debounce utility
 function debounce<T extends (...args: any[]) => any>(
 	func: T,
 	wait: number

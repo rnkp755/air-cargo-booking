@@ -11,26 +11,24 @@ import {
 } from "@/types/booking";
 import { withBookingLock } from "@/lib/utils/bookingLock";
 import { eq } from "drizzle-orm";
+import { requireAdmin, AuthenticatedRequest } from "@/app/api/users/middleware";
 
 interface RouteParams {
 	params: Promise<{ refId: string }>;
 }
 
-export const PATCH = asyncHandler(
-	async (req: Request, { params }: RouteParams) => {
-		// Validate URL parameter
+export const PATCH = requireAdmin(
+	asyncHandler(async (req: AuthenticatedRequest, { params }: RouteParams) => {
 		const { refId }: BookingUpdateParams = BookingUpdateParamsSchema.parse(
 			await params
 		);
 
 		try {
-			// Use distributed locking to prevent concurrent modifications
 			const result = await withBookingLock(
 				refId,
 				async (lockedBooking) => {
 					// Perform the updation within a database transaction
 					const updateResult = await db.transaction(async (tx) => {
-						// Update booking status to DEPARTED
 						// Check if the current status is BOOKED
 						if (lockedBooking.status !== "BOOKED") {
 							throw APIError.badRequest(
@@ -58,7 +56,6 @@ export const PATCH = asyncHandler(
 							`Booking with ref ${updatedBooking.refId} marked as DEPARTED`
 						);
 
-						// Create updation event
 						await tx.insert(events).values({
 							entityType: "BOOKING",
 							entityId: updatedBooking.id,
@@ -81,7 +78,6 @@ export const PATCH = asyncHandler(
 				}
 			);
 
-			// Prepare response data
 			const response: BookingUpdateResponse = {
 				id: result.booking.id,
 				refId: result.booking.refId,
@@ -99,15 +95,13 @@ export const PATCH = asyncHandler(
 		} catch (error) {
 			console.error("Booking status updation failed:", error);
 
-			// Re-throw known errors
 			if (error instanceof APIError) {
 				throw error;
 			}
 
-			// Handle unexpected errors
 			throw APIError.internal(
 				"Failed to update booking status due to an unexpected error"
 			);
 		}
-	}
+	})
 );
