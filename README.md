@@ -138,6 +138,27 @@ pnpm dev
 
 The website will be available at `http://localhost:3000/`
 
+### 6. Setup Monitoring with Grafana and Prometheus
+
+Start Grafana and Prometheus services using Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+Then configure Grafana dashboard:
+
+1. Go to `http://localhost:3001` to access Grafana
+2. In the left sidebar, click on **Connections** > **Add a new connection**
+3. Select **Prometheus** as the data source
+4. Configure the Prometheus connection settings
+5. Go to **Dashboards** in the left sidebar
+6. Click **Import a dashboard**
+7. Enter dashboard ID: `11159`
+8. Choose a name for your dashboard and complete the import
+
+You now have monitoring and metrics visualization set up for your application.
+
 ## 📖 API Documentation
 
 ### � Authentication
